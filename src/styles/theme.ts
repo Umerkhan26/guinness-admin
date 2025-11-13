@@ -1,0 +1,31 @@
+export const theme = {
+  colors: {
+    bg: "#000000",
+    card: "#0f0f12",
+    cardAlt: "#151517",
+    text: "#ffffff",
+    subtle: "#c7c7c7",
+    muted: "#9CA3AF",
+    border: "#2a2a2e",
+    link: "#eab308",
+    primary: "#F59E0B",
+    primaryBright: "#FBBF24",
+    primarySoft: "rgba(245, 158, 11, 0.2)",
+    success: "#22c55e",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    yellowGlow: "#eab308",
+    gray700: "#374151",
+    gray800: "#1F2937",
+    gray900: "#111827",
+  },
+  gradient: {
+    header: "linear-gradient(to bottom, #111827, #000000)",
+    goldSoft: "linear-gradient(135deg, rgba(217,119,6,0.25), rgba(180,83,9,0.25))",
+    goldCard: "linear-gradient(135deg, rgba(234,179,8,0.25), rgba(234,179,8,0.15))",
+  },
+  radii: { sm: "8px", md: "12px", lg: "16px", xl: "20px" },
+  shadow: "0 0 20px rgba(245, 158, 11, 0.15)",
+  font: { display: "serif" },
+} as const;
+export type AppTheme = typeof theme;
