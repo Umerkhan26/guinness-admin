@@ -18,7 +18,7 @@ export const createRandomRumShop = (): RumShop => {
     licenseNumber: `RL-${faker.string.alphanumeric(6).toUpperCase()}`,
     owner: faker.person.fullName(),
     phone: faker.phone.number(),
-    rating: faker.number.float({ min: 1, max: 5, precision: 0.1 }),
+    rating: faker.number.float({ min: 1, max: 5, fractionDigits: 1 }),
   };
 };
 

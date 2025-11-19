@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import LoginPage from './pages/LoginPage'
 import Sidebar from './components/Sidebar'
@@ -11,41 +11,68 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UsersPage from './pages/UsersPage'
 import DataTablePage from './pages/DataTablePage'
 import BusinessesPage from './pages/BusinessesPage';
+import RewardsPage from './pages/RewardsPage';
+import RedeemsPage from './pages/RedeemsPage';
+import BusinessInfoPage from './pages/BusinessInfoPage';
+import type { LoginSuccessResponse } from './api/userApi';
+import { Toaster } from 'react-hot-toast';
 // New mock data imports
-import { BUSINESSES } from './data/businesses';
-import { ITEMS } from './data/items';
-import { REDEEMS } from './data/redeems';
-import { WHOLESALERS } from './data/wholesalers';
 import { RUM_SHOPS } from './data/rumShops';
 import { SUPERMARKETS } from './data/supermarkets';
 import { BARS } from './data/bars';
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const getInitialAuthState = () => {
+  if (typeof window === 'undefined') return false;
+  return Boolean(window.localStorage.getItem('authToken'));
+};
 
-  const handleLogin = () => {
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(getInitialAuthState);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+
+  const handleLogin = (response: LoginSuccessResponse) => {
     setIsLoggedIn(true);
+    localStorage.setItem('authToken', response.token);
+    localStorage.setItem('currentUser', JSON.stringify(response.user));
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
   };
+
+  useEffect(() => {
+    if (isLoggedIn) return;
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('authToken') : null;
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, [isLoggedIn]);
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <Router>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         {isLoggedIn ? (
           <div style={{ display: 'flex' }}>
-            <Sidebar onLogout={handleLogout} />
-            <MainContent>
+            <Sidebar 
+              onLogout={handleLogout} 
+              isOpen={isSidebarOpen} 
+              setIsOpen={setIsSidebarOpen}
+              isCollapsed={isSidebarCollapsed}
+              setIsCollapsed={setIsSidebarCollapsed}
+            />
+            <MainContent $sidebarOpen={isSidebarOpen} $sidebarCollapsed={isSidebarCollapsed}>
               <Routes>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/businesses" element={<BusinessesPage />} />
-                <Route path="/items" element={<DataTablePage title="Items" data={ITEMS} columns={[{ key: 'name', header: 'Name' }, { key: 'sku', header: 'SKU' }, { key: 'price', header: 'Price' }, { key: 'inStock', header: 'In Stock' }, { key: 'category', header: 'Category' }, { key: 'supplier', header: 'Supplier' }]} />} />
-                <Route path="/redeems" element={<DataTablePage title="Redeems" data={REDEEMS} columns={[{ key: 'item', header: 'Item' }, { key: 'user', header: 'User' }, { key: 'status', header: 'Status' }, { key: 'date', header: 'Date' }, { key: 'transactionId', header: 'Transaction ID' }, { key: 'points', header: 'Points' }]} />} />
-                <Route path="/wholesalers" element={<DataTablePage title="Wholesalers" data={WHOLESALERS} columns={[{ key: 'name', header: 'Name' }, { key: 'contactPerson', header: 'Contact' }, { key: 'region', header: 'Region' }, { key: 'phone', header: 'Phone' }, { key: 'email', header: 'Email' }, { key: 'address', header: 'Address' }]} />} />
+                <Route path="/rewards" element={<RewardsPage />} />
+                <Route path="/redeems" element={<RedeemsPage />} />
+                <Route path="/business-info" element={<BusinessInfoPage />} />
                 <Route path="/rum-shops" element={<DataTablePage title="Rum Shops" data={RUM_SHOPS} columns={[{ key: 'name', header: 'Name' }, { key: 'owner', header: 'Owner' }, { key: 'licenseNumber', header: 'License #' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'rating', header: 'Rating' }]} />} />
                 <Route path="/supermarkets" element={<DataTablePage title="Supermarkets" data={SUPERMARKETS} columns={[{ key: 'name', header: 'Name' }, { key: 'manager', header: 'Manager' }, { key: 'chain', header: 'Chain' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'weeklySales', header: 'Weekly Sales' }]} />} />
                 <Route path="/bars" element={<DataTablePage title="Bars" data={BARS} columns={[{ key: 'name', header: 'Name' }, { key: 'owner', header: 'Owner' }, { key: 'specialty', header: 'Specialty' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'capacity', header: 'Capacity' }]} />} />

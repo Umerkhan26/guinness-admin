@@ -9,7 +9,7 @@ const Title = styled.h1`
   margin-bottom: 1.5rem; /* Reduced margin */
 `;
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 15;
 
 interface DataItem {
   id: string;

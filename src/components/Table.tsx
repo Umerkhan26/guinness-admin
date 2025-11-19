@@ -2,12 +2,18 @@ import React from 'react';
 import styled from 'styled-components';
 
 const TableWrapper = styled.div`
-  overflow-x: auto;
   background-color: ${({ theme }) => theme.colors.card};
-  border-radius: ${({ theme }) => theme.radii.md};
-  padding: 1rem;
+  border-radius: ${({ theme }) => theme.radii.lg};
+  padding: 1.5rem 12px;
   box-shadow: ${({ theme }) => theme.shadow};
   border: 1px solid ${({ theme }) => theme.colors.border};
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  height: 600px;
+  min-height: 600px;
+  max-height: 600px;
 
   /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {
@@ -23,14 +29,15 @@ const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  table-layout: fixed; /* Force table to fit container */
+  font-size: 0.8rem;
+  table-layout: fixed;
 `;
 
 const Th = styled.th`
-  padding: 0.6rem 1rem; /* Reduced vertical padding */
+  padding: 0.4rem 0.65rem; /* tighter padding */
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   color: ${({ theme }) => theme.colors.subtle};
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 
@@ -39,13 +46,24 @@ const Th = styled.th`
   }
 `;
 
-const Td = styled.td`
-  padding: 0.5rem 1rem; /* Reduced vertical padding */
+const Td = styled.td<{ $isCustom?: boolean }>`
+  padding: ${({ $isCustom }) => ($isCustom ? '0.4rem 0.4rem' : '0.45rem 0.6rem')}; /* reduced padding for custom cells */
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  font-size: 0.85rem; /* Reduced font size */
-  white-space: nowrap; /* Prevent text wrapping */
-  overflow: hidden; /* Hide overflow */
-  text-overflow: ellipsis; /* Add ellipsis for overflow */
+  font-size: 0.7rem;
+  white-space: ${({ $isCustom }) => ($isCustom ? 'normal' : 'nowrap')};
+  overflow: ${({ $isCustom }) => ($isCustom ? 'hidden' : 'hidden')};
+  text-overflow: ${({ $isCustom }) => ($isCustom ? 'clip' : 'ellipsis')};
+  
+  /* Ensure custom content (like action buttons) stays within cell */
+  ${({ $isCustom }) =>
+    $isCustom
+      ? `
+    > * {
+      max-width: 100%;
+      overflow: hidden;
+    }
+  `
+      : ''}
 
   @media (max-width: 768px) {
     display: grid;
@@ -87,7 +105,7 @@ interface Column<T> {
 }
 
 interface TableProps<T> {
-  columns: Column<T>[];
+  columns: readonly Column<T>[] | Column<T>[];
   data: T[];
 }
 
@@ -109,6 +127,7 @@ const Table = <T extends { id: string }>({ columns, data }: TableProps<T>) => {
                 <Td
                   key={col.key}
                   data-label={col.header}
+                $isCustom={Boolean(col.render)}
                   title={col.render ? undefined : String(row[col.key as keyof T])}
                 >
                   {col.render ? col.render(row) : <span>{String(row[col.key as keyof T])}</span>}

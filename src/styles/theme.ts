@@ -14,6 +14,7 @@ export const theme = {
     success: "#22c55e",
     warning: "#f59e0b",
     danger: "#ef4444",
+    dangerBright: "#f87171",
     yellowGlow: "#eab308",
     gray700: "#374151",
     gray800: "#1F2937",
@@ -24,7 +25,7 @@ export const theme = {
     goldSoft: "linear-gradient(135deg, rgba(217,119,6,0.25), rgba(180,83,9,0.25))",
     goldCard: "linear-gradient(135deg, rgba(234,179,8,0.25), rgba(234,179,8,0.15))",
   },
-  radii: { sm: "8px", md: "12px", lg: "16px", xl: "20px" },
+  radii: { sm: "8px", md: "12px", lg: "16px", xl: "20px", full: "9999px" },
   shadow: "0 0 20px rgba(245, 158, 11, 0.15)",
   font: { display: "serif" },
 } as const;

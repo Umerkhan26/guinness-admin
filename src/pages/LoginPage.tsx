@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { toast } from 'react-hot-toast';
 import { theme } from '../styles/theme';
+import { loginAdmin, type LoginSuccessResponse } from '../api/userApi';
 
 const LoginContainer = styled.div`
   display: flex;
@@ -70,21 +72,33 @@ const Button = styled.button`
 `;
 
 interface LoginPageProps {
-  onLogin: () => void;
+  onLogin: (response: LoginSuccessResponse) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For this example, we'll just check if the fields are not empty
-    if (email && password) {
-      onLogin();
-    } else {
-      alert('Please enter email and password');
+    if (!email || !password) {
+      toast.error('Please enter email and password.');
+      return;
     }
+
+    setIsLoading(true);
+
+    const response = await loginAdmin({ email, password });
+
+    if (response.success) {
+      toast.success(response.message ?? 'Login successful.');
+      onLogin(response);
+    } else {
+      toast.error(response.message ?? 'Login failed.');
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -104,7 +118,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button type="submit">Login</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Button>
         </Form>
       </LoginCard>
     </LoginContainer>
