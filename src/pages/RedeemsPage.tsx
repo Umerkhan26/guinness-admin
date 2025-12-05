@@ -534,11 +534,13 @@ const RedeemsPage = () => {
       ) : filteredRedeems.length === 0 ? (
         <EmptyState>
           <div>
-            <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No redeems found</p>
-            <p style={{ fontSize: '0.9rem' }}>
-              {debouncedSearch.trim()
-                ? 'Try adjusting your search criteria.'
-                : 'There are no redeems to display.'}
+            <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+              No redeems found
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#888' }}>
+              {debouncedSearch.trim() || activeBusinessFilter !== 'all'
+                ? 'Try adjusting your search criteria or selecting a different business filter.'
+                : 'There is no redeem history to display.'}
             </p>
           </div>
         </EmptyState>

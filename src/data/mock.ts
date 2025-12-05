@@ -1,4 +1,4 @@
-import { FiHome, FiUsers, FiBriefcase, FiPackage, FiAward, FiTruck, FiShoppingBag, FiCoffee, FiShoppingCart, FiTrendingUp, FiSettings } from 'react-icons/fi';
+import { FiHome, FiUsers, FiBriefcase, FiPackage, FiAward, FiTruck, FiShoppingBag, FiCoffee, FiShoppingCart, FiTrendingUp, FiSettings, FiClock } from 'react-icons/fi';
 
 export const sidebarData = {
   user: {
@@ -12,6 +12,7 @@ export const sidebarData = {
     { id: 'rewards', title: 'Rewards', path: '/rewards', icon: 'FiPackage' },
     { id: 'redeems', title: 'Redeems', path: '/redeems', icon: 'FiAward' },
     { id: 'businessInfo', title: 'BusinessInfo', path: '/business-info', icon: 'FiTruck' },
+    { id: 'history', title: 'History', path: '/history', icon: 'FiClock' },
     { id: 'rum-shops', title: 'Rum Shops', path: '/rum-shops', icon: 'FiShoppingBag' },
     { id: 'supermarkets', title: 'Supermarkets', path: '/supermarkets', icon: 'FiShoppingCart' },
     { id: 'bars', title: 'Bars', path: '/bars', icon: 'FiCoffee' },
@@ -30,4 +31,5 @@ export const icons: { [key: string]: React.ElementType } = {
   FiShoppingCart,
   FiTrendingUp,
   FiSettings,
+  FiClock,
 };

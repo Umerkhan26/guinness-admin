@@ -604,7 +604,18 @@ const RewardsPage: React.FC = () => {
       {isLoading ? (
         <TableSkeleton columns={columns.length} rows={8} />
       ) : filteredRewards.length === 0 ? (
-        <EmptyState>No rewards found.</EmptyState>
+        <EmptyState>
+          <div>
+            <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+              No rewards found
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#888' }}>
+              {debouncedSearch.trim() || activeBusinessFilter !== 'all'
+                ? 'Try adjusting your search criteria or selecting a different business filter.'
+                : 'There are no rewards in the system.'}
+            </p>
+          </div>
+        </EmptyState>
       ) : (
         <>
           <Table columns={columns} data={filteredRewards} />

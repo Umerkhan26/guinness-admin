@@ -192,3 +192,40 @@ export const deleteBusiness = async (id: string): Promise<CreateBusinessResponse
   }
 };
 
+export interface GetBusinessByIdSuccessResponse {
+  success: true;
+  data: BusinessRecord;
+}
+
+export interface GetBusinessByIdErrorResponse {
+  success: false;
+  message: string;
+}
+
+export type GetBusinessByIdResponse = GetBusinessByIdSuccessResponse | GetBusinessByIdErrorResponse;
+
+export const getBusinessById = async (businessId: string): Promise<GetBusinessByIdResponse> => {
+  if (!businessId) {
+    return { success: false, message: 'Business ID is required.' };
+  }
+
+  try {
+    return await request<GetBusinessByIdSuccessResponse, GetBusinessByIdErrorResponse>(
+      `/getBusinessById/${businessId}`,
+      {
+        method: 'GET',
+      },
+    );
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const data = error.data as GetBusinessByIdErrorResponse | { message?: string };
+      const message = typeof data === 'object' && data && 'message' in data
+        ? data.message ?? 'Unable to fetch business details.'
+        : 'Unable to fetch business details.';
+      return { success: false, message };
+    }
+
+    return { success: false, message: 'Unable to reach the server. Please try again.' };
+  }
+};
+

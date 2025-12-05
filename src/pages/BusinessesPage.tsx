@@ -333,7 +333,18 @@ const BusinessesPage: React.FC = () => {
       {isLoading ? (
         <TableSkeleton columns={columns.length} rows={8} />
       ) : businesses.length === 0 ? (
-        <EmptyState>No businesses found.</EmptyState>
+        <EmptyState>
+          <div>
+            <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+              No businesses found
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#888' }}>
+              {debouncedSearch.trim()
+                ? 'Try adjusting your search criteria.'
+                : 'There are no businesses in the system.'}
+            </p>
+          </div>
+        </EmptyState>
       ) : (
         <Table columns={columns} data={businesses} />
       )}

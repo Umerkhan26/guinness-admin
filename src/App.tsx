@@ -14,6 +14,9 @@ import BusinessesPage from './pages/BusinessesPage';
 import RewardsPage from './pages/RewardsPage';
 import RedeemsPage from './pages/RedeemsPage';
 import BusinessInfoPage from './pages/BusinessInfoPage';
+import HistoryPage from './pages/HistoryPage';
+import UserDetailsPage from './pages/UserDetailsPage';
+import BusinessDetailsPage from './pages/BusinessDetailsPage';
 import type { LoginSuccessResponse } from './api/userApi';
 import { Toaster } from 'react-hot-toast';
 // New mock data imports
@@ -73,6 +76,9 @@ function App() {
                 <Route path="/rewards" element={<RewardsPage />} />
                 <Route path="/redeems" element={<RedeemsPage />} />
                 <Route path="/business-info" element={<BusinessInfoPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/user-details/:userId" element={<UserDetailsPage />} />
+                <Route path="/business-details/:businessId" element={<BusinessDetailsPage />} />
                 <Route path="/rum-shops" element={<DataTablePage title="Rum Shops" data={RUM_SHOPS} columns={[{ key: 'name', header: 'Name' }, { key: 'owner', header: 'Owner' }, { key: 'licenseNumber', header: 'License #' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'rating', header: 'Rating' }]} />} />
                 <Route path="/supermarkets" element={<DataTablePage title="Supermarkets" data={SUPERMARKETS} columns={[{ key: 'name', header: 'Name' }, { key: 'manager', header: 'Manager' }, { key: 'chain', header: 'Chain' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'weeklySales', header: 'Weekly Sales' }]} />} />
                 <Route path="/bars" element={<DataTablePage title="Bars" data={BARS} columns={[{ key: 'name', header: 'Name' }, { key: 'owner', header: 'Owner' }, { key: 'specialty', header: 'Specialty' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'capacity', header: 'Capacity' }]} />} />

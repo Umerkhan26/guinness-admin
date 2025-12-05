@@ -45,7 +45,7 @@ export const loginAdmin = async (
       return { success: false, message };
     }
 
-    return { success: false, message: 'Unable to reach the server. Please try again.' };
+    return { success: false, message: 'Unable to reach the server. Please try agawain.' };
   }
 };
 
@@ -344,4 +344,63 @@ export const rejectBusiness = async (userId: string): Promise<BusinessDecisionRe
   }
 };
 
+export interface UserDetails {
+  _id: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  location?: string;
+  role: 'consumer' | 'business' | 'admin';
+  points?: number;
+  businessInfo?: {
+    approvedByAdmin?: boolean;
+    businessType?: string;
+    ownerName?: string;
+    address?: string;
+    method?: string;
+    stats?: {
+      casesSold?: number;
+      receiptsUploaded?: number;
+      roundsSold?: number;
+    };
+  };
+}
+
+export interface GetUserByIdSuccessResponse {
+  success: true;
+  data: UserDetails;
+}
+
+export interface GetUserByIdErrorResponse {
+  success: false;
+  message: string;
+}
+
+export type GetUserByIdResponse = GetUserByIdSuccessResponse | GetUserByIdErrorResponse;
+
+export const getUserById = async (userId: string): Promise<GetUserByIdResponse> => {
+  if (!userId) {
+    return { success: false, message: 'User ID is required.' };
+  }
+
+  try {
+    return await request<GetUserByIdSuccessResponse, GetUserByIdErrorResponse>(
+      `/getUserById/${userId}`,
+      {
+        method: 'GET',
+      },
+    );
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const data = error.data as GetUserByIdErrorResponse | { message?: string };
+      const message = typeof data === 'object' && data && 'message' in data
+        ? data.message ?? 'Unable to fetch user details.'
+        : 'Unable to fetch user details.';
+      return { success: false, message };
+    }
+
+    return { success: false, message: 'Unable to reach the server. Please try again.' };
+  }
+};
 

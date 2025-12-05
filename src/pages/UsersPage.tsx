@@ -693,7 +693,18 @@ const UsersPage: React.FC = () => {
           <TableSkeleton columns={columns.length} rows={8} />
         ) : users.length === 0 ? (
           <EmptyState>
-            {activeRole === 'requests' ? 'No business requests found.' : `No ${activeRole}s found.`}
+            <div>
+              <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                {activeRole === 'requests' ? 'No business requests found' : `No ${activeRole}s found`}
+              </p>
+              <p style={{ fontSize: '0.9rem', color: '#888' }}>
+                {debouncedSearch.trim()
+                  ? 'Try adjusting your search criteria.'
+                  : activeRole === 'requests'
+                    ? 'There are no pending business requests at the moment.'
+                    : `There are no ${activeRole}s in the system.`}
+              </p>
+    </div>
           </EmptyState>
         ) : (
           <Table columns={columns} data={users} />

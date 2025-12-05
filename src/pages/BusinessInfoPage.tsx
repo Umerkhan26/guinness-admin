@@ -468,11 +468,13 @@ const BusinessInfoPage = () => {
       ) : paginatedBusinessInfo.length === 0 ? (
         <EmptyState>
           <div>
-            <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No business info found</p>
-            <p style={{ fontSize: '0.9rem' }}>
+            <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+              No business info found
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#888' }}>
               {debouncedSearch.trim()
                 ? 'Try adjusting your search criteria.'
-                : 'There are no business info to display.'}
+                : 'There is no business information to display.'}
             </p>
           </div>
         </EmptyState>
