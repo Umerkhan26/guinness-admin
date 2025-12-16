@@ -1,9 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { FiUsers, FiBriefcase, FiCheckCircle, FiXCircle, FiClock, FiShield } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { getUserDashboardSummary, type UserDashboardSummaryData } from '../api/userApi';
 import { toast } from 'react-hot-toast';
+
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
+
+const SkeletonBox = styled.div<{ $width?: string; $height?: string; $radius?: string }>`
+  width: ${({ $width }) => $width || '100%'};
+  height: ${({ $height }) => $height || '20px'};
+  border-radius: ${({ $radius, theme }) => $radius || theme.radii.sm};
+  background: linear-gradient(
+    90deg,
+    ${({ theme }) => theme.colors.cardAlt} 0%,
+    ${({ theme }) => theme.colors.border} 50%,
+    ${({ theme }) => theme.colors.cardAlt} 100%
+  );
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+`;
 
 const DashboardContainer = styled.div`
   width: 100%;
@@ -140,12 +163,36 @@ const SectionTitle = styled.h2`
   color: ${({ theme }) => theme.colors.text};
 `;
 
+// Simple centered container used only for the rare "no data" state
 const LoadingContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 400px;
   color: ${({ theme }) => theme.colors.muted};
+`;
+
+const SkeletonStatCard = styled.div`
+  background: ${({ theme }) => theme.gradient.goldSoft};
+  padding: 1.75rem;
+  border-radius: ${({ theme }) => theme.radii.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-shadow: ${({ theme }) => theme.shadow};
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SkeletonChart = styled.div`
+  background: ${({ theme }) => theme.colors.card};
+  padding: 2rem;
+  border-radius: ${({ theme }) => theme.radii.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  height: 400px;
+  box-shadow: ${({ theme }) => theme.shadow};
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `;
 
 const COLORS = ['#F59E0B', '#22c55e', '#ef4444', '#3b82f6', '#a855f7', '#f59e0b'];
@@ -179,7 +226,68 @@ const DashboardPage: React.FC = () => {
     return (
       <DashboardContainer>
         <Title>Dashboard</Title>
-        <LoadingContainer>Loading dashboard data...</LoadingContainer>
+        
+        {/* Main Stats Skeleton */}
+        <StatGrid>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <SkeletonStatCard key={index}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                  <SkeletonBox $width="60%" $height="2.5rem" />
+                  <SkeletonBox $width="40%" $height="0.9rem" />
+                </div>
+                <SkeletonBox $width="40px" $height="40px" $radius="8px" />
+              </div>
+            </SkeletonStatCard>
+          ))}
+        </StatGrid>
+
+        {/* User Status Skeleton */}
+        <SectionTitle>User Status</SectionTitle>
+        <StatGrid>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <SkeletonStatCard key={index}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                  <SkeletonBox $width="50%" $height="2.5rem" />
+                  <SkeletonBox $width="70%" $height="0.9rem" />
+                  <SkeletonBox $width="50%" $height="0.75rem" />
+                </div>
+                <SkeletonBox $width="40px" $height="40px" $radius="8px" />
+              </div>
+            </SkeletonStatCard>
+          ))}
+        </StatGrid>
+
+        {/* Business Approval Skeleton */}
+        <SectionTitle>Business Approval</SectionTitle>
+        <StatGrid>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <SkeletonStatCard key={index}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                  <SkeletonBox $width="60%" $height="2.5rem" />
+                  <SkeletonBox $width="80%" $height="0.9rem" />
+                  <SkeletonBox $width="60%" $height="0.75rem" />
+                </div>
+                <SkeletonBox $width="40px" $height="40px" $radius="8px" />
+              </div>
+            </SkeletonStatCard>
+          ))}
+        </StatGrid>
+
+        {/* Charts Skeleton */}
+        <SectionTitle>Analytics</SectionTitle>
+        <ChartsGrid>
+          <SkeletonChart>
+            <SkeletonBox $width="40%" $height="1.25rem" />
+            <SkeletonBox $width="100%" $height="90%" $radius="12px" />
+          </SkeletonChart>
+          <SkeletonChart>
+            <SkeletonBox $width="40%" $height="1.25rem" />
+            <SkeletonBox $width="100%" $height="90%" $radius="12px" />
+          </SkeletonChart>
+        </ChartsGrid>
       </DashboardContainer>
     );
   }
