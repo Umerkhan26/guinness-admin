@@ -163,15 +163,6 @@ const SectionTitle = styled.h2`
   color: ${({ theme }) => theme.colors.text};
 `;
 
-// Simple centered container used only for the rare "no data" state
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  color: ${({ theme }) => theme.colors.muted};
-`;
-
 const SkeletonStatCard = styled.div`
   background: ${({ theme }) => theme.gradient.goldSoft};
   padding: 1.75rem;
@@ -292,30 +283,42 @@ const DashboardPage: React.FC = () => {
     );
   }
 
-  if (!summary) {
-    return (
-      <DashboardContainer>
-        <Title>Dashboard</Title>
-        <LoadingContainer>No data available</LoadingContainer>
-      </DashboardContainer>
-    );
-  }
+  const safeSummary: UserDashboardSummaryData = summary ?? {
+    totalUsers: 0,
+    roles: {
+      consumers: 0,
+      businesses: 0,
+      admins: 0,
+    },
+    status: {
+      active: 0,
+      pending: 0,
+      blocked: 0,
+      rejected: 0,
+    },
+    businesses: {
+      approved: 0,
+      rejected: 0,
+      pendingApproval: 0,
+      pendingByType: [],
+    },
+  };
 
   // Prepare chart data
   const roleData = [
-    { name: 'Consumers', value: summary.roles.consumers },
-    { name: 'Businesses', value: summary.roles.businesses },
-    { name: 'Admins', value: summary.roles.admins },
+    { name: 'Consumers', value: safeSummary.roles.consumers },
+    { name: 'Businesses', value: safeSummary.roles.businesses },
+    { name: 'Admins', value: safeSummary.roles.admins },
   ];
 
   const statusData = [
-    { name: 'Active', value: summary.status.active },
-    { name: 'Pending', value: summary.status.pending },
-    { name: 'Blocked', value: summary.status.blocked },
-    { name: 'Rejected', value: summary.status.rejected },
+    { name: 'Active', value: safeSummary.status.active },
+    { name: 'Pending', value: safeSummary.status.pending },
+    { name: 'Blocked', value: safeSummary.status.blocked },
+    { name: 'Rejected', value: safeSummary.status.rejected },
   ];
 
-  const businessTypeData = summary.businesses.pendingByType.map((item) => ({
+  const businessTypeData = safeSummary.businesses.pendingByType.map((item) => ({
     name: item.businessType || 'Unknown',
     value: item.count,
   }));
@@ -329,7 +332,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="primary">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.totalUsers}</StatCount>
+              <StatCount>{safeSummary.totalUsers}</StatCount>
               <StatLabel>Total Users</StatLabel>
             </StatContent>
             <StatIcon $variant="primary">
@@ -341,7 +344,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="info">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.roles.consumers}</StatCount>
+              <StatCount>{safeSummary.roles.consumers}</StatCount>
               <StatLabel>Consumers</StatLabel>
             </StatContent>
             <StatIcon $variant="info">
@@ -353,7 +356,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="info">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.roles.businesses}</StatCount>
+              <StatCount>{safeSummary.roles.businesses}</StatCount>
               <StatLabel>Businesses</StatLabel>
             </StatContent>
             <StatIcon $variant="info">
@@ -365,7 +368,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="info">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.roles.admins}</StatCount>
+              <StatCount>{safeSummary.roles.admins}</StatCount>
               <StatLabel>Admins</StatLabel>
             </StatContent>
             <StatIcon $variant="info">
@@ -381,7 +384,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="success">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.status.active}</StatCount>
+              <StatCount>{safeSummary.status.active}</StatCount>
               <StatLabel>Active Users</StatLabel>
               <StatSubtext>Currently active</StatSubtext>
             </StatContent>
@@ -394,7 +397,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="warning">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.status.pending}</StatCount>
+              <StatCount>{safeSummary.status.pending}</StatCount>
               <StatLabel>Pending Users</StatLabel>
               <StatSubtext>Awaiting approval</StatSubtext>
             </StatContent>
@@ -407,7 +410,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="danger">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.status.blocked}</StatCount>
+              <StatCount>{safeSummary.status.blocked}</StatCount>
               <StatLabel>Blocked Users</StatLabel>
               <StatSubtext>Currently blocked</StatSubtext>
             </StatContent>
@@ -420,7 +423,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="danger">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.status.rejected}</StatCount>
+              <StatCount>{safeSummary.status.rejected}</StatCount>
               <StatLabel>Rejected Users</StatLabel>
               <StatSubtext>Rejected by admin</StatSubtext>
             </StatContent>
@@ -437,7 +440,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="success">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.businesses.approved}</StatCount>
+              <StatCount>{safeSummary.businesses.approved}</StatCount>
               <StatLabel>Approved Businesses</StatLabel>
               <StatSubtext>Admin approved</StatSubtext>
             </StatContent>
@@ -450,7 +453,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="warning">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.businesses.pendingApproval}</StatCount>
+              <StatCount>{safeSummary.businesses.pendingApproval}</StatCount>
               <StatLabel>Pending Approval</StatLabel>
               <StatSubtext>Awaiting admin approval</StatSubtext>
             </StatContent>
@@ -463,7 +466,7 @@ const DashboardPage: React.FC = () => {
         <StatCard $variant="danger">
           <StatHeader>
             <StatContent>
-              <StatCount>{summary.businesses.rejected}</StatCount>
+              <StatCount>{safeSummary.businesses.rejected}</StatCount>
               <StatLabel>Rejected Businesses</StatLabel>
               <StatSubtext>Rejected by admin</StatSubtext>
             </StatContent>
