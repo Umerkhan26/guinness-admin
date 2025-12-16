@@ -132,6 +132,66 @@ export const getUsers = async (params: GetUsersParams = {}): Promise<GetUsersRes
   }
 };
 
+export interface UserDashboardSummaryData {
+  totalUsers: number;
+  roles: {
+    consumers: number;
+    businesses: number;
+    admins: number;
+  };
+  status: {
+    active: number;
+    pending: number;
+    blocked: number;
+    rejected: number;
+  };
+  businesses: {
+    approved: number;
+    rejected: number;
+    pendingApproval: number;
+    pendingByType: Array<{
+      businessType: string;
+      count: number;
+    }>;
+  };
+}
+
+export interface GetUserDashboardSummarySuccessResponse {
+  success: true;
+  message: string;
+  data: UserDashboardSummaryData;
+}
+
+export interface GetUserDashboardSummaryErrorResponse {
+  success: false;
+  message: string;
+}
+
+export type GetUserDashboardSummaryResponse =
+  | GetUserDashboardSummarySuccessResponse
+  | GetUserDashboardSummaryErrorResponse;
+
+export const getUserDashboardSummary = async (): Promise<GetUserDashboardSummaryResponse> => {
+  try {
+    return await request<
+      GetUserDashboardSummarySuccessResponse,
+      GetUserDashboardSummaryErrorResponse
+    >('/users-summary', {
+      method: 'GET',
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const data = error.data as GetUserDashboardSummaryErrorResponse | { message?: string };
+      const message = typeof data === 'object' && data && 'message' in data
+        ? data.message ?? 'Unable to fetch dashboard summary.'
+        : 'Unable to fetch dashboard summary.';
+      return { success: false, message };
+    }
+
+    return { success: false, message: 'Unable to reach the server. Please try again.' };
+  }
+};
+
 export interface DeleteUserSuccessResponse {
   success: true;
   message: string;

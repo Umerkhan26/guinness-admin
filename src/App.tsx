@@ -21,8 +21,8 @@ import type { LoginSuccessResponse } from './api/userApi';
 import { Toaster } from 'react-hot-toast';
 // New mock data imports
 import { RUM_SHOPS } from './data/rumShops';
-import { SUPERMARKETS } from './data/supermarkets';
 import { BARS } from './data/bars';
+import UploadedReceiptsPage from './pages/UploadedReceiptsPage';
 
 const getInitialAuthState = () => {
   if (typeof window === 'undefined') return false;
@@ -31,7 +31,13 @@ const getInitialAuthState = () => {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(getInitialAuthState);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  // Initialize sidebar state based on screen size
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth > 768;
+    }
+    return true;
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   const handleLogin = (response: LoginSuccessResponse) => {
@@ -60,7 +66,7 @@ function App() {
       <Router>
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         {isLoggedIn ? (
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
             <Sidebar 
               onLogout={handleLogout} 
               isOpen={isSidebarOpen} 
@@ -80,7 +86,7 @@ function App() {
                 <Route path="/user-details/:userId" element={<UserDetailsPage />} />
                 <Route path="/business-details/:businessId" element={<BusinessDetailsPage />} />
                 <Route path="/rum-shops" element={<DataTablePage title="Rum Shops" data={RUM_SHOPS} columns={[{ key: 'name', header: 'Name' }, { key: 'owner', header: 'Owner' }, { key: 'licenseNumber', header: 'License #' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'rating', header: 'Rating' }]} />} />
-                <Route path="/supermarkets" element={<DataTablePage title="Supermarkets" data={SUPERMARKETS} columns={[{ key: 'name', header: 'Name' }, { key: 'manager', header: 'Manager' }, { key: 'chain', header: 'Chain' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'weeklySales', header: 'Weekly Sales' }]} />} />
+                <Route path="/supermarkets" element={<UploadedReceiptsPage />} />
                 <Route path="/bars" element={<DataTablePage title="Bars" data={BARS} columns={[{ key: 'name', header: 'Name' }, { key: 'owner', header: 'Owner' }, { key: 'specialty', header: 'Specialty' }, { key: 'address', header: 'Address' }, { key: 'phone', header: 'Phone' }, { key: 'capacity', header: 'Capacity' }]} />} />
                 {/* Fallback for other routes */}
                 <Route path="*" element={<DashboardPage />} />

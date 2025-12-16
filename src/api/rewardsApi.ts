@@ -34,6 +34,15 @@ export type GetRewardsResponse = GetRewardsSuccessResponse | GetRewardsErrorResp
 export interface GetRewardsParams {
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+  rewardType?: string;
+  isActive?: boolean;
+  minPoints?: number;
+  maxPoints?: number;
+  expiryBefore?: string;
+  expiryAfter?: string;
 }
 
 export const getRewards = async (
@@ -43,6 +52,15 @@ export const getRewards = async (
 
   if (params.page != null) searchParams.set('page', String(params.page));
   if (params.limit != null) searchParams.set('limit', String(params.limit));
+  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.search) searchParams.set('search', params.search.trim());
+  if (params.rewardType) searchParams.set('rewardType', params.rewardType);
+  if (params.isActive !== undefined) searchParams.set('isActive', String(params.isActive));
+  if (params.minPoints !== undefined) searchParams.set('minPoints', String(params.minPoints));
+  if (params.maxPoints !== undefined) searchParams.set('maxPoints', String(params.maxPoints));
+  if (params.expiryBefore) searchParams.set('expiryBefore', params.expiryBefore);
+  if (params.expiryAfter) searchParams.set('expiryAfter', params.expiryAfter);
 
   const path = searchParams.toString()
     ? `/getAllRewards?${searchParams.toString()}`

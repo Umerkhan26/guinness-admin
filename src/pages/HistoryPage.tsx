@@ -6,6 +6,7 @@ import Table from '../components/Table';
 import TableSkeleton from '../components/TableSkeleton';
 import Pagination from '../components/Pagination';
 import SearchInput from '../components/SearchInput';
+import Modal from '../components/Modal';
 import { getHistory } from '../api/historyApi';
 
 const Title = styled.h1`
@@ -144,12 +145,110 @@ const ActionTypeBadge = styled.span<{ $actionType: string }>`
   background-color: ${({ theme, $actionType }) => {
     if ($actionType === 'qr_code_create') return theme.colors.success;
     if ($actionType === 'qr_scan') return theme.colors.primary;
+    if ($actionType === 'receipt_upload') return theme.colors.warning;
     return theme.colors.muted;
   }};
   color: ${({ theme }) => theme.colors.bg};
 `;
 
-const ITEMS_PER_PAGE = 15;
+const ViewDetailsButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0;
+  font-weight: 500;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primaryBright};
+  }
+`;
+
+const DetailsModalContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-right: 1rem;
+`;
+
+const DetailsTitle = styled.h3`
+  margin: 0;
+  font-size: 1.5rem;
+  color: ${({ theme }) => theme.colors.text};
+  font-weight: 600;
+`;
+
+const DetailsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: ${({ theme }) => theme.colors.cardAlt};
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.colors.border};
+    border-radius: 3px;
+
+    &:hover {
+      background: ${({ theme }) => theme.colors.muted};
+    }
+  }
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.subtle};
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+`;
+
+const DetailValue = styled.span`
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1rem;
+  word-break: break-word;
+  line-height: 1.5;
+`;
+
+const DetailLink = styled.a`
+  color: ${({ theme }) => theme.colors.primary};
+  text-decoration: underline;
+  font-size: 1rem;
+  word-break: break-all;
+  line-height: 1.5;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primaryBright};
+  }
+`;
+
+const ITEMS_PER_PAGE = 100;
 const SEARCH_DEBOUNCE_MS = 400;
 
 type HistoryRow = {
@@ -160,19 +259,24 @@ type HistoryRow = {
   actionType: string;
   points: number;
   details: string;
+  detailsObject?: Record<string, any>; // Store parsed details for rendering
   timestamp: string;
 };
 
-type ActionTypeFilter = 'all' | 'qr_code_create' | 'qr_scan';
+type ActionTypeFilter = 'all' | 'qr_code_create' | 'qr_scan' | 'receipt_upload';
 
 const HistoryPage = () => {
   const navigate = useNavigate();
-  const [allHistory, setAllHistory] = useState<HistoryRow[]>([]);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const [activeActionFilter, setActiveActionFilter] = useState<ActionTypeFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [selectedDetails, setSelectedDetails] = useState<Record<string, any> | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -203,16 +307,80 @@ const HistoryPage = () => {
     navigate(`/business-details/${businessId}`);
   };
 
+  // Handle details click to open modal
+  const handleDetailsClick = (detailsObj: Record<string, any> | undefined) => {
+    if (!detailsObj || Object.keys(detailsObj).length === 0) {
+      toast.error('No details available.');
+      return;
+    }
+    setSelectedDetails(detailsObj);
+    setIsDetailsModalOpen(true);
+  };
+
+  // Format key names for display
+  const formatKeyName = (key: string): string => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  };
+
 
   // Helper function to normalize history data
   const normalizeHistory = (items: any[]): HistoryRow[] => {
     return items.map((item) => {
       // Format details as a readable string
-      const detailsStr = item.details
-        ? Object.entries(item.details)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join(', ')
-        : '—';
+      let detailsStr = '—';
+      let detailsObj: Record<string, any> | undefined = undefined;
+      
+      if (item.details) {
+        if (typeof item.details === 'string') {
+          // Try to parse as JSON string
+          try {
+            const parsed = JSON.parse(item.details);
+            if (typeof parsed === 'object' && parsed !== null) {
+              detailsObj = parsed;
+              // Format as readable key-value pairs
+              const formatted = Object.entries(parsed)
+                .map(([key, value]) => {
+                  // Format key names (camelCase to Title Case)
+                  const formattedKey = key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, (str) => str.toUpperCase())
+                    .trim();
+                  
+                  // Format values
+                  let formattedValue = String(value);
+                  if (key === 'imageUrl' && typeof value === 'string') {
+                    formattedValue = 'View Image';
+                  } else if (typeof value === 'number') {
+                    formattedValue = String(value);
+                  }
+                  
+                  return `${formattedKey}: ${formattedValue}`;
+                })
+                .join(' • ');
+              detailsStr = formatted;
+            } else {
+              detailsStr = item.details;
+            }
+          } catch {
+            // If parsing fails, use the string as-is
+            detailsStr = item.details;
+          }
+        } else if (typeof item.details === 'object' && item.details !== null) {
+          detailsObj = item.details;
+          detailsStr = Object.entries(item.details)
+            .map(([key, value]) => {
+              const formattedKey = key
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, (str) => str.toUpperCase())
+                .trim();
+              return `${formattedKey}: ${value}`;
+            })
+            .join(' • ');
+        }
+      }
 
       // Extract user ID (can be string or object)
       let userId = '—';
@@ -242,6 +410,7 @@ const HistoryPage = () => {
         actionType: item.actionType ?? '—',
         points: item.points ?? 0,
         details: detailsStr,
+        detailsObject: detailsObj,
         timestamp: item.timestamp
           ? new Date(item.timestamp).toLocaleDateString('en-GB', {
               day: '2-digit',
@@ -255,47 +424,71 @@ const HistoryPage = () => {
     });
   };
 
-  // Fetch all history data for filtering (fetch large batch)
+  // Reset to page 1 when search or action filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, activeActionFilter]);
+
+  // Fetch history data from backend with filtering and pagination
   useEffect(() => {
     let isCancelled = false;
     setIsLoading(true);
 
-    const fetchAllHistory = async () => {
+    const fetchHistory = async () => {
       try {
-        // Fetch a large batch to enable proper client-side filtering
-        const response = await getHistory({
-          page: 1,
-          limit: 1000,
+        const params: any = {
+          page: currentPage,
+          limit: ITEMS_PER_PAGE,
           sortBy: 'timestamp',
           sortOrder: 'desc',
-        });
+        };
+
+        // Add actionType filter if not 'all'
+        if (activeActionFilter !== 'all') {
+          params.actionType = activeActionFilter;
+        }
+
+        // Add search if provided
+        if (debouncedSearch.trim()) {
+          params.search = debouncedSearch.trim();
+        }
+
+        const response = await getHistory(params);
 
         if (isCancelled) return;
 
         if (!response.success) {
           toast.error(response.message || 'Failed to fetch history.');
-          setAllHistory([]);
+          setHistory([]);
+          setTotalPages(1);
+          setTotalCount(0);
           setIsLoading(false);
           return;
         }
 
-        setAllHistory(normalizeHistory(response.data.data));
+        setHistory(normalizeHistory(response.data.data));
+        setTotalPages(response.data.totalPages);
+        setTotalCount(response.data.total);
         setIsLoading(false);
       } catch (error) {
         if (!isCancelled) {
           console.error('Failed to fetch history:', error);
           toast.error('Unexpected error while fetching history.');
-          setAllHistory([]);
+          setHistory([]);
+          setTotalPages(1);
+          setTotalCount(0);
           setIsLoading(false);
         }
       }
     };
 
-    fetchAllHistory().catch((error) => {
+    fetchHistory().catch((error) => {
       if (!isCancelled) {
         console.error('Failed to fetch history:', error);
         toast.error('Unexpected error while fetching history.');
-        setAllHistory([]);
+        setHistory([]);
+        setTotalPages(1);
+        setTotalCount(0);
         setIsLoading(false);
       }
     });
@@ -303,49 +496,7 @@ const HistoryPage = () => {
     return () => {
       isCancelled = true;
     };
-  }, []);
-
-
-  // Filter history by action type filter and search
-  const filteredHistory = useMemo(() => {
-    let filtered: HistoryRow[] = allHistory;
-
-    // Filter by action type (sub-tab)
-    if (activeActionFilter !== 'all') {
-      filtered = filtered.filter((item) => item.actionType === activeActionFilter);
-    }
-
-    // Filter by search
-    if (debouncedSearch.trim()) {
-      const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(
-        (item) =>
-          item.userId.toLowerCase().includes(searchLower) ||
-          item.session.toLowerCase().includes(searchLower) ||
-          item.relatedBusiness.toLowerCase().includes(searchLower) ||
-          item.actionType.toLowerCase().includes(searchLower) ||
-          item.details.toLowerCase().includes(searchLower) ||
-          String(item.points).includes(searchLower) ||
-          item.timestamp.toLowerCase().includes(searchLower),
-      );
-    }
-
-    return filtered;
-  }, [allHistory, activeActionFilter, debouncedSearch]);
-
-  // Reset to page 1 when search or action filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, activeActionFilter]);
-
-  // Paginate filtered history (client-side pagination)
-  const paginatedHistory = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredHistory.slice(startIndex, endIndex);
-  }, [filteredHistory, currentPage]);
-
-  const filteredTotalPages = Math.max(Math.ceil(filteredHistory.length / ITEMS_PER_PAGE), 1);
+  }, [currentPage, activeActionFilter, debouncedSearch]);
 
   const columns = useMemo(
     () =>
@@ -379,6 +530,21 @@ const HistoryPage = () => {
         {
           key: 'details',
           header: 'Details',
+          render: (item: HistoryRow) => {
+            if (!item.detailsObject || Object.keys(item.detailsObject).length === 0) {
+              return <span>—</span>;
+            }
+
+            return (
+              <ViewDetailsButton
+                type="button"
+                onClick={() => handleDetailsClick(item.detailsObject)}
+                title="Click to view details"
+              >
+                View Details
+              </ViewDetailsButton>
+            );
+          },
         },
         {
           key: 'session',
@@ -456,6 +622,16 @@ const HistoryPage = () => {
         >
           QR Scan
         </SubTabButton>
+        <SubTabButton
+          type="button"
+          $active={activeActionFilter === 'receipt_upload'}
+          onClick={() => {
+            setActiveActionFilter('receipt_upload');
+            setCurrentPage(1);
+          }}
+        >
+          Receipt Upload
+        </SubTabButton>
       </SubTabsContainer>
       <SearchInput
         value={searchTerm}
@@ -465,7 +641,7 @@ const HistoryPage = () => {
 
       {isLoading ? (
         <TableSkeleton columns={columns.length} rows={8} />
-      ) : paginatedHistory.length === 0 ? (
+      ) : history.length === 0 ? (
         <EmptyState>
           <div>
             <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
@@ -482,21 +658,59 @@ const HistoryPage = () => {
         </EmptyState>
       ) : (
         <>
-          <Table columns={columns} data={paginatedHistory} />
+          <Table columns={columns} data={history} />
           <Pagination
             currentPage={currentPage}
-            totalPages={filteredTotalPages}
+            totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
           <SummaryText>
             {isLoading
               ? 'Fetching history...'
-              : `Showing page ${Math.min(currentPage, filteredTotalPages || 1)} of ${filteredTotalPages || 1}. ${
+              : `Showing page ${Math.min(currentPage, totalPages || 1)} of ${totalPages || 1}. ${
                   activeActionFilter !== 'all' ? `${activeActionFilter.replace(/_/g, ' ')} - ` : ''
-                }Total history: ${filteredHistory.length}.`}
+                }Total history: ${totalCount}.`}
           </SummaryText>
         </>
       )}
+      <Modal 
+        isOpen={isDetailsModalOpen} 
+        onClose={() => setIsDetailsModalOpen(false)}
+        maxWidth="600px"
+      >
+        <DetailsModalContent>
+          <DetailsTitle>Receipt Details</DetailsTitle>
+          {selectedDetails && (
+            <DetailsList>
+              {Object.entries(selectedDetails).map(([key, value]) => {
+                const formattedKey = formatKeyName(key);
+                
+                if (key === 'imageUrl' && typeof value === 'string') {
+                  return (
+                    <DetailItem key={key}>
+                      <DetailLabel>{formattedKey}</DetailLabel>
+                      <DetailLink 
+                        href={value} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
+                        {value}
+                      </DetailLink>
+                    </DetailItem>
+                  );
+                }
+                
+                return (
+                  <DetailItem key={key}>
+                    <DetailLabel>{formattedKey}</DetailLabel>
+                    <DetailValue>{String(value)}</DetailValue>
+                  </DetailItem>
+                );
+              })}
+            </DetailsList>
+          )}
+        </DetailsModalContent>
+      </Modal>
     </div>
   );
 };

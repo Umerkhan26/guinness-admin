@@ -15,14 +15,16 @@ const ModalOverlay = styled.div`
   z-index: 2000;
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<{ $maxWidth?: string }>`
   background-color: ${({ theme }) => theme.colors.card};
   padding: 2rem;
   border-radius: ${({ theme }) => theme.radii.lg};
   box-shadow: ${({ theme }) => theme.shadow};
   width: 100%;
-  max-width: 500px;
+  max-width: ${({ $maxWidth }) => $maxWidth || '500px'};
   position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
 `;
 
 const CloseButton = styled.button`
@@ -44,14 +46,15 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  maxWidth?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, maxWidth }) => {
   if (!isOpen) return null;
 
   return (
     <ModalOverlay onClick={onClose}>
-      <ModalContainer onClick={(e) => e.stopPropagation()}>
+      <ModalContainer $maxWidth={maxWidth} onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onClose}>
           <FiX />
         </CloseButton>

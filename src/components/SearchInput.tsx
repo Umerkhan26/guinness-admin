@@ -7,6 +7,12 @@ const InputContainer = styled.div`
   margin-bottom: 2rem;
   width: 100%;
   max-width: 400px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+  }
 `;
 
 const StyledInput = styled.input`

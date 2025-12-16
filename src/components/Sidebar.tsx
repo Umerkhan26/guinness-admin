@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { theme } from '../styles/theme';
 import { sidebarData, icons } from '../data/mock';
 import { NavLink as RouterNavLink } from 'react-router-dom';
-import { FiMenu, FiX, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiX, FiLogOut, FiAward } from 'react-icons/fi';
 
 interface SidebarContainerProps {
   $isOpen: boolean;
@@ -13,6 +13,23 @@ interface SidebarContainerProps {
 interface ToggleButtonProps {
   $isOpen: boolean;
 }
+
+const SidebarOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: ${({ $isOpen }) => ($isOpen ? '1' : '0')};
+  visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+`;
 
 const SidebarContainer = styled.div<SidebarContainerProps>`
   background: ${theme.gradient.goldCard};
@@ -28,6 +45,12 @@ const SidebarContainer = styled.div<SidebarContainerProps>`
   transition: all 0.3s ease-in-out;
   z-index: 1000;
   transform: ${({ $isOpen }) => ($isOpen ? 'translateX(0)' : 'translateX(-100%)')};
+
+  @media (max-width: 768px) {
+    width: 280px;
+    padding: 1.5rem;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const LogoContainer = styled.div<{ $isCollapsed: boolean }>`
@@ -109,6 +132,16 @@ const NavLink = styled(RouterNavLink)<{ $isCollapsed: boolean }>`
         : `inset 3px 0 0 0 ${theme.colors.primary}`
     };
   }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    
+    svg {
+      font-size: 1.3rem;
+      margin-right: 1rem;
+    }
+  }
 `;
 
 const UserProfileContainer = styled.div`
@@ -127,16 +160,44 @@ const UserProfile = styled.div<{ $isCollapsed: boolean }>`
   &:hover {
     background-color: ${({ theme }) => theme.colors.cardAlt};
   }
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+    padding: 0.75rem;
+  }
 `;
 
-const UserAvatar = styled.div<{ $isCollapsed: boolean }>`
+const UserAvatar = styled.div<{ $isCollapsed: boolean; $avatarUrl?: string }>`
   width: ${({ $isCollapsed }) => ($isCollapsed ? '32px' : '40px')};
   height: ${({ $isCollapsed }) => ($isCollapsed ? '32px' : '40px')};
   border-radius: 50%;
-  background-color: ${theme.colors.gray800};
+  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryBright});
+  background-image: ${({ $avatarUrl }) => ($avatarUrl ? `url(${$avatarUrl})` : 'none')};
+  background-size: ${({ $avatarUrl }) => ($avatarUrl ? 'contain' : 'auto')};
+  background-position: center;
+  background-repeat: no-repeat;
   margin-right: ${({ $isCollapsed }) => ($isCollapsed ? '0' : '1rem')};
   flex-shrink: 0;
   transition: all 0.3s ease-in-out;
+  border: 2px solid ${theme.colors.primary};
+  box-shadow: 0 0 10px ${theme.colors.primary}44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: ${theme.colors.success};
+    border: 2px solid ${theme.colors.bg};
+    box-shadow: 0 0 4px ${theme.colors.success}88;
+  }
 `;
 
 const UserName = styled.div<{ $isCollapsed: boolean }>`
@@ -216,16 +277,17 @@ const FloatingToggleButton = styled.button`
   top: 1rem;
   left: 1rem;
   z-index: 1001;
-  background: transparent;
+  background: ${theme.colors.card};
   border: 1px solid ${theme.colors.border};
   color: ${theme.colors.subtle};
   font-size: 1.2rem;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: ${theme.radii.sm};
   transition: all 0.2s ease-in-out;
   padding: 0;
+  box-shadow: ${theme.shadow};
 
   &:hover {
     background: ${theme.colors.primarySoft};
@@ -235,6 +297,10 @@ const FloatingToggleButton = styled.button`
 
   &:active {
     transform: scale(0.95);
+  }
+
+  @media (min-width: 769px) {
+    display: none;
   }
 `;
 
@@ -249,41 +315,104 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onLogout, isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
   const { user, navItems } = sidebarData;
   const [isLogoutVisible, setIsLogoutVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const userProfileRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Track if we're on mobile and handle responsive behavior
+  useEffect(() => {
+    let wasMobile = window.innerWidth <= 768;
+    
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      
+      if (mobile && !wasMobile) {
+        // Transitioning from desktop to mobile - close sidebar
+        setIsOpen(false);
+        setIsCollapsed(false);
+      } else if (!mobile && wasMobile) {
+        // Transitioning from mobile to desktop - open sidebar
+        setIsOpen(true);
+        setIsCollapsed(false);
+      }
+      
+      wasMobile = mobile;
+    };
+
+    // Set initial mobile state
+    setIsMobile(wasMobile);
+    if (wasMobile) {
+      setIsOpen(false);
+      setIsCollapsed(false);
+    }
+
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [setIsOpen, setIsCollapsed]);
 
   const handleToggle = () => {
     if (isOpen) {
-      setIsCollapsed(!isCollapsed);
+      // On mobile, always close the sidebar
+      if (isMobile) {
+        setIsOpen(false);
+      } else {
+        // On desktop, toggle collapse
+        setIsCollapsed(!isCollapsed);
+      }
     } else {
       setIsOpen(true);
+      // On mobile, always show full sidebar (not collapsed)
+      if (isMobile) {
+        setIsCollapsed(false);
+      }
     }
   };
 
+  // Handle click outside sidebar on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Handle logout popup click outside
       if (userProfileRef.current && !userProfileRef.current.contains(event.target as Node)) {
         setIsLogoutVisible(false);
       }
+
+      // Handle sidebar click outside on mobile
+      if (isMobile && isOpen) {
+        if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+          const target = event.target as HTMLElement;
+          // Don't close if clicking the toggle button
+          if (!target.closest('[data-sidebar-toggle]')) {
+            setIsOpen(false);
+          }
+        }
+      }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [userProfileRef]);
+  }, [isOpen, isMobile, userProfileRef]);
 
   return (
     <>
+      <SidebarOverlay $isOpen={isOpen} onClick={() => setIsOpen(false)} />
       {!isOpen && (
-        <FloatingToggleButton onClick={handleToggle}>
+        <FloatingToggleButton data-sidebar-toggle onClick={handleToggle}>
           <FiMenu />
         </FloatingToggleButton>
       )}
-      <SidebarContainer $isOpen={isOpen} $isCollapsed={isCollapsed}>
+      <SidebarContainer ref={sidebarRef} $isOpen={isOpen} $isCollapsed={isCollapsed}>
         <LogoContainer $isCollapsed={isCollapsed}>
           <Logo $isCollapsed={isCollapsed}>GUINNESS</Logo>
           {isOpen && (
-            <ToggleButton $isOpen={isOpen} onClick={handleToggle}>
-              {isCollapsed ? <FiMenu /> : <FiX />}
+            <ToggleButton 
+              $isOpen={isOpen} 
+              onClick={handleToggle}
+              data-sidebar-toggle
+            >
+              {isMobile ? <FiX /> : isCollapsed ? <FiMenu /> : <FiX />}
             </ToggleButton>
           )}
         </LogoContainer>
@@ -296,8 +425,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, isOpen, setIsOpen, isCollap
                   to={item.path} 
                   $isCollapsed={isCollapsed}
                   onClick={() => {
-                    // Only auto-close on mobile screens
-                    if (window.innerWidth <= 768) {
+                    // Auto-close on mobile screens when navigating
+                    if (isMobile) {
                       setIsOpen(false);
                     }
                   }}
@@ -310,7 +439,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, isOpen, setIsOpen, isCollap
           })}
         </NavList>
         <UserProfileContainer ref={userProfileRef}>
-          {isLogoutVisible && !isCollapsed && (
+          {isLogoutVisible && (!isCollapsed || isMobile) && (
             <LogoutPopup>
               <LogoutButton onClick={onLogout}>
                 <FiLogOut />
@@ -321,14 +450,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, isOpen, setIsOpen, isCollap
           <UserProfile 
             $isCollapsed={isCollapsed}
             onClick={() => {
-              if (isCollapsed) {
+              if (isMobile) {
+                // On mobile, show logout popup
+                setIsLogoutVisible(!isLogoutVisible);
+              } else if (isCollapsed) {
                 setIsCollapsed(false);
               } else {
                 setIsLogoutVisible(!isLogoutVisible);
               }
             }}
           >
-            <UserAvatar $isCollapsed={isCollapsed} />
+            <UserAvatar $isCollapsed={isCollapsed} $avatarUrl={user.avatar}>
+              {!user.avatar && (
+                <FiAward 
+                  style={{ 
+                    color: theme.colors.bg, 
+                    fontSize: isCollapsed ? '18px' : '22px',
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
+                  }} 
+                />
+              )}
+            </UserAvatar>
             <UserName $isCollapsed={isCollapsed}>{user.name}</UserName>
           </UserProfile>
         </UserProfileContainer>

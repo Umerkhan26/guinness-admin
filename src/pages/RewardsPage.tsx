@@ -336,17 +336,32 @@ const RewardsPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
 
-  // Fetch paginated rewards from server
+  // Fetch paginated rewards from server with server-side filtering and search
   useEffect(() => {
     let isCancelled = false;
     setIsLoading(true);
 
     const fetchRewards = async () => {
       try {
-        const response = await getRewards({
+        // Build API params with server-side filtering
+        const apiParams: Parameters<typeof getRewards>[0] = {
           page: currentPage,
           limit: ITEMS_PER_PAGE,
-        });
+          sortBy: 'createdAt',
+          sortOrder: 'desc',
+        };
+
+        // Add search parameter (searches rewardName on backend)
+        if (debouncedSearch.trim()) {
+          apiParams.search = debouncedSearch.trim();
+        }
+
+        // Note: Business filtering is not supported by backend API yet
+        // If needed, it would require backend support for filtering by business ID/name
+        // For now, we'll filter by business name client-side after fetching
+        // This is a limitation - ideally backend should support business filtering
+
+        const response = await getRewards(apiParams);
 
         if (isCancelled) return;
 
@@ -394,7 +409,13 @@ const RewardsPage: React.FC = () => {
           } satisfies RewardRow;
         });
 
-        setRewards(rows);
+        // Apply business filter client-side (since backend doesn't support it yet)
+        let filteredRows = rows;
+        if (activeBusinessFilter !== 'all') {
+          filteredRows = rows.filter((reward) => reward.businessName === activeBusinessFilter);
+        }
+
+        setRewards(filteredRows);
         setTotalPages(response.pagination?.totalPages ?? 1);
         setTotalCount(response.pagination?.total ?? 0);
         setIsLoading(false);
@@ -425,35 +446,11 @@ const RewardsPage: React.FC = () => {
       isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, refreshVersion]); // Removed businesses from deps - we use it but don't need to refetch when it changes
+  }, [currentPage, refreshVersion, debouncedSearch, activeBusinessFilter]); // Added debouncedSearch and activeBusinessFilter
 
-  // Filter current page's rewards by business and search (client-side filtering on current page only)
-  const filteredRewards = useMemo(() => {
-    let filtered = rewards;
-
-    // Filter by business
-    if (activeBusinessFilter !== 'all') {
-      filtered = filtered.filter((reward) => reward.businessName === activeBusinessFilter);
-    }
-
-    // Filter by search
-    if (debouncedSearch.trim()) {
-      const searchLower = debouncedSearch.toLowerCase();
-      filtered = filtered.filter((reward) =>
-        Object.values(reward).some((value) =>
-          String(value).toLowerCase().includes(searchLower)
-        )
-      );
-    }
-
-    return filtered;
-  }, [rewards, activeBusinessFilter, debouncedSearch]);
-
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when filter or search changes
   useEffect(() => {
-    if (activeBusinessFilter !== 'all' || debouncedSearch.trim()) {
-      setCurrentPage(1);
-    }
+    setCurrentPage(1);
   }, [activeBusinessFilter, debouncedSearch]);
 
   const handleEdit = (reward: RewardRow) => {
@@ -603,7 +600,7 @@ const RewardsPage: React.FC = () => {
       />
       {isLoading ? (
         <TableSkeleton columns={columns.length} rows={8} />
-      ) : filteredRewards.length === 0 ? (
+      ) : rewards.length === 0 ? (
         <EmptyState>
           <div>
             <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>
@@ -618,7 +615,7 @@ const RewardsPage: React.FC = () => {
         </EmptyState>
       ) : (
         <>
-          <Table columns={columns} data={filteredRewards} />
+          <Table columns={columns} data={rewards} />
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           <SummaryText>
             {isLoading

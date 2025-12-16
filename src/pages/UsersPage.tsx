@@ -18,12 +18,20 @@ import {
 const Title = styled.h1`
   font-size: 2.5rem;
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: 1.75rem;
+  }
 `;
 
 const TabsContainer = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 `;
 
 const TabButton = styled.button<{ $active: boolean }>`
@@ -37,12 +45,19 @@ const TabButton = styled.button<{ $active: boolean }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme, $active }) =>
       $active ? theme.colors.primaryBright : theme.colors.card};
     color: ${({ theme, $active }) => ($active ? theme.colors.bg : theme.colors.primary)};
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -124,6 +139,10 @@ const PageLayout = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 `;
 
 const HeaderStack = styled.div`
@@ -136,6 +155,9 @@ const HeaderStack = styled.div`
   z-index: 10;
   background: ${({ theme }) => theme.colors.bg};
   padding-bottom: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 `;
 
 const ContentArea = styled.div`
@@ -145,7 +167,11 @@ const ContentArea = styled.div`
   flex-direction: column;
   gap: 1rem;
   overflow: hidden;
+  overflow-x: hidden;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 `;
 
 const ConfirmOverlay = styled.div`

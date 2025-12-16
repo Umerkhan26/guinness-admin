@@ -12,10 +12,17 @@ export const MainContent = styled.main<MainContentProps & { $sidebarCollapsed?: 
     return $sidebarCollapsed ? '80px' : '280px';
   }};
   min-width: 0; /* Prevents flex item from overflowing its container */
+  max-width: 100%; /* Prevent horizontal overflow */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   transition: margin-left 0.3s ease-in-out;
 
   @media (max-width: 768px) {
     margin-left: 0;
-    padding: 1rem; /* Adjust padding for mobile */
+    padding: 0.75rem; /* Reduced padding for mobile */
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 `;

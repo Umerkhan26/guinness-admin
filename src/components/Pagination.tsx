@@ -6,6 +6,11 @@ const PaginationContainer = styled.div`
   justify-content: center;
   align-items: center;
   margin-top: 2rem;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  box-sizing: border-box;
 `;
 
 const Button = styled.button`

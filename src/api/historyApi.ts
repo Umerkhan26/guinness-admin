@@ -10,12 +10,23 @@ export interface HistoryDetails {
 
 export interface HistoryRecord {
   _id: string;
-  user: string;
+  user: string | {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    role?: string;
+  };
   session?: string;
-  relatedBusiness?: string;
+  relatedBusiness?: string | {
+    _id: string;
+    businessInfo?: {
+      businessName?: string;
+      businessType?: string;
+    };
+  };
   actionType: string;
   points: number;
-  details: HistoryDetails;
+  details: HistoryDetails | string;
   timestamp: string;
   createdAt: string;
   updatedAt: string;
@@ -44,6 +55,8 @@ export interface GetHistoryParams {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  actionType?: string | string[];
+  search?: string;
 }
 
 export const getHistory = async (
@@ -55,6 +68,16 @@ export const getHistory = async (
   if (params.limit != null) searchParams.set('limit', String(params.limit));
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.search) searchParams.set('search', params.search);
+  
+  // Handle actionType - can be string or array
+  if (params.actionType) {
+    if (Array.isArray(params.actionType)) {
+      searchParams.set('actionType', params.actionType.join(','));
+    } else {
+      searchParams.set('actionType', params.actionType);
+    }
+  }
 
   const path = searchParams.toString()
     ? `/getAllUserHistory?${searchParams.toString()}`
